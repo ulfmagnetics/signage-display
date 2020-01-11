@@ -28,6 +28,10 @@ def draw_background(width, height, top, bottom):
 
     return bitmap
 
+def render_aqi_value(metric, value=None, color=0x000000):
+    text = "\n".join([metric, str(value) if value else '--'])
+    return label.Label(terminalio.FONT, text=text, color=color, line_spacing=1.0)
+
 #------------------------------------------------------
 
 display = tft_gizmo.TFT_Gizmo()
@@ -36,7 +40,7 @@ display.show(splash)
 
 aqi = Aqi()
 colors = {'PM2.5': 0, 'O3': 0}
-value_text = {'PM2.5': '', 'O3': ''}
+value_text = {'PM2.5': render_aqi_value('PM2.5'), 'O3': render_aqi_value('O3')}
 label_text = {'PM2.5': '', 'O3': ''}
 
 palette = displayio.Palette(len(aqi.levels) + 1)
@@ -48,21 +52,15 @@ bitmap = draw_background(DISPLAY_WIDTH, DISPLAY_HEIGHT, colors['PM2.5'], colors[
 bg_sprite = displayio.TileGrid(bitmap, pixel_shader=palette, x=0, y=0)
 splash.append(bg_sprite)
 
-pm25_value_group = displayio.Group(scale=3, x=180, y=60)
-pm25_text = label.Label(terminalio.FONT, text='--', color=0x000000)
+pm25_value_group = displayio.Group(scale=3, x=150, y=80)
+pm25_text = value_text['PM2.5']
 pm25_value_group.append(pm25_text)
 splash.append(pm25_value_group)
 
-o3_value_group = displayio.Group(scale=3, x=60, y=180)
-o3_text = label.Label(terminalio.FONT, text='--', color=0x000000)
+o3_value_group = displayio.Group(scale=3, x=30, y=150)
+o3_text = value_text['O3']
 o3_value_group.append(o3_text)
 splash.append(o3_value_group)
-
-#text_group = displayio.Group(max_size=10, scale=2, x=20, y=120)
-#text = 'Air Quality Index'
-#text_area = label.Label(terminalio.FONT, text=text, color=0xFFFFFF)
-#text_group.append(text_area)
-#splash.append(text_group)
 
 ble = BLERadio()
 uart_server = UARTService()
@@ -80,7 +78,7 @@ while True:
             print("AirQualityPacket: metric={0}, value={1}".format(packet.metric, packet.value))
             level = aqi.level_for_value(packet.value)
             colors[packet.metric] = level.index
-            value_text[packet.metric] = str(packet.value)
+            value_text[packet.metric] = render_aqi_value(packet.metric, packet.value)
             label_text[packet.metric] = level.label
 
             bitmap = draw_background(DISPLAY_WIDTH, DISPLAY_HEIGHT, top=colors['PM2.5'], bottom=colors['O3'])
@@ -90,13 +88,12 @@ while True:
             bg_sprite = new_sprite
 
             # FIXME: choose text colors conditionally based on background color
-            if packet.metric == 'PM2.5':
-                new_pm25_text = label.Label(terminalio.FONT, text=value_text['PM2.5'], color=0x000000)
-                pm25_value_group.remove(pm25_text)
-                pm25_value_group.append(new_pm25_text)
-                pm25_text = new_pm25_text
-            elif packet.metric == 'O3':
-                new_o3_text = label.Label(terminalio.FONT, text=value_text['O3'], color=0x000000)
-                o3_value_group.remove(o3_text)
-                o3_value_group.append(new_o3_text)
-                o3_text = new_o3_text
+            new_pm25_text = value_text['PM2.5']
+            pm25_value_group.remove(pm25_text)
+            pm25_value_group.append(new_pm25_text)
+            pm25_text = new_pm25_text
+
+            new_o3_text = value_text['O3']
+            o3_value_group.remove(o3_text)
+            o3_value_group.append(new_o3_text)
+            o3_text = new_o3_text
