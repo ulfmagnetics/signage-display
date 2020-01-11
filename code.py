@@ -29,8 +29,7 @@ def draw_background(width, height, top, bottom):
     return bitmap
 
 def render_aqi_value(metric, value=None, color=0x000000):
-    text = "\n".join([metric, str(value) if value else '--'])
-    return label.Label(terminalio.FONT, text=text, color=color, line_spacing=1.0)
+    return label.Label(terminalio.FONT, text=str(value), color=color, line_spacing=1.0)
 
 #------------------------------------------------------
 
@@ -52,12 +51,12 @@ bitmap = draw_background(DISPLAY_WIDTH, DISPLAY_HEIGHT, colors['PM2.5'], colors[
 bg_sprite = displayio.TileGrid(bitmap, pixel_shader=palette, x=0, y=0)
 splash.append(bg_sprite)
 
-pm25_value_group = displayio.Group(scale=3, x=150, y=80)
+pm25_value_group = displayio.Group(scale=4, x=140, y=75)
 pm25_text = value_text['PM2.5']
 pm25_value_group.append(pm25_text)
 splash.append(pm25_value_group)
 
-o3_value_group = displayio.Group(scale=3, x=30, y=150)
+o3_value_group = displayio.Group(scale=4, x=50, y=160)
 o3_text = value_text['O3']
 o3_value_group.append(o3_text)
 splash.append(o3_value_group)
