@@ -7,7 +7,7 @@ from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.nordic import UARTService
 from adafruit_display_text import label
 from adafruit_gizmo import tft_gizmo
-from time import sleep
+from time import sleep, localtime
 
 from signage_air_quality.air_quality_packet import Packet, AirQualityPacket
 from signage_air_quality.aqi import Aqi
@@ -30,6 +30,11 @@ def draw_background(width, height, top, bottom):
 
 def render_aqi_value(metric, value='--', color=0x000000):
     return label.Label(terminalio.FONT, text=str(value), color=color, line_spacing=1.0)
+
+def render_timestamp_label(timestamp=None, color=0xFFFFFF):
+    now = localtime(timestamp)
+    timestamp_text = 'Updated at {0}:{1} UTC on {2}/{3}/{4}'.format(now.tm_hour, now.tm_min, now.tm_mon, now.tm_mday, now.tm_year)
+    return label.Label(terminalio.FONT, text=timestamp_text, color=color)
 
 #------------------------------------------------------
 
@@ -71,6 +76,12 @@ o3_text = value_text['O3']
 o3_value_group.append(o3_text)
 splash.append(o3_value_group)
 
+timestamp_group = displayio.Group(scale=1, x=5, y=230)
+timestamp_text = 'Waiting for AQI data...'
+timestamp_label = label.Label(terminalio.FONT, text=timestamp_text, color=0xFFFFFF)
+timestamp_group.append(timestamp_label)
+splash.append(timestamp_group)
+
 ble = BLERadio()
 uart_server = UARTService()
 advertisement = ProvideServicesAdvertisement(uart_server)
@@ -84,7 +95,7 @@ while True:
     while ble.connected:
         packet = Packet.from_stream(uart_server)
         if isinstance(packet, AirQualityPacket):
-            print("AirQualityPacket: metric={0}, value={1}".format(packet.metric, packet.value))
+            print("AirQualityPacket: metric={0}, value={1}, timestamp={2}".format(packet.metric, packet.value, packet.timestamp))
             level = aqi.level_for_value(packet.value)
             colors[packet.metric] = level.index
             value_text[packet.metric] = render_aqi_value(packet.metric, packet.value)
@@ -106,3 +117,8 @@ while True:
             o3_value_group.remove(o3_text)
             o3_value_group.append(new_o3_text)
             o3_text = new_o3_text
+
+            new_timestamp_label = render_timestamp_label(packet.timestamp)
+            timestamp_group.remove(timestamp_label)
+            timestamp_group.append(new_timestamp_label)
+            timestamp_label = new_timestamp_label

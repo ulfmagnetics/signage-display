@@ -1,1 +1,1 @@
-git+git://github.com/ulfmagnetics/signage-air-quality@df89bbf922470ff9829342f56fb9dfa9907ea717
+git+git://github.com/ulfmagnetics/signage-air-quality@b5a01f29e019e531e0b79bc2df059675ffdeebc2
